@@ -18,7 +18,7 @@ def format_transcript(transcript):
     """
     return '\n'.join(line['text'] for line in transcript)
 
-def get_transcript(video_url):
+def get_transcript(video_url, languages):
     video_id = get_video_id_from_url(video_url)
     if not video_id:
         return "Invalid YouTube URL", None
@@ -27,11 +27,8 @@ def get_transcript(video_url):
         # Fetching all available transcripts for the video
         transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
         
-        # Try to fetch Traditional Chinese transcript, fallback to English
-        try:
-            transcript = transcripts.find_transcript(['zh-Hant'])
-        except:
-            transcript = transcripts.find_transcript(['en'])
+        # Trying to fetch the preferred language transcript
+        transcript = transcripts.find_transcript(languages)
         
         # Fetching the actual transcript data
         transcript_data = transcript.fetch()
@@ -71,8 +68,12 @@ st.title('YouTube Transcript Extractor')
 video_url = st.text_input('Enter the YouTube video URL')
 
 if video_url:
-    transcript, video_id = get_transcript(video_url)
+    # Try fetching Traditional Chinese first, then English
+    transcript, video_id = get_transcript(video_url, ['zh-Hant', 'en'])
     if transcript:
+        # Render the download button directly after URL input field
+        download_button(transcript, f"{video_id}_transcript.txt", "Download Transcript")
         st.subheader('Transcript')
         st.write(transcript)
-        download_button(transcript, f"{video_id}_transcript.txt", "Download Transcript")
+    else:
+        st.write("Transcript not available.")
