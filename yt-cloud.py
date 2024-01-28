@@ -24,11 +24,20 @@ def get_transcript(video_url):
         return "Invalid YouTube URL", None
 
     try:
-        # Fetching the transcript
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        # Fetching all available transcripts for the video
+        transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+        
+        # Try to fetch Traditional Chinese transcript, fallback to English
+        try:
+            transcript = transcripts.find_transcript(['zh-Hant'])
+        except:
+            transcript = transcripts.find_transcript(['en'])
+        
+        # Fetching the actual transcript data
+        transcript_data = transcript.fetch()
         
         # Formatting the transcript
-        plain_text_transcript = format_transcript(transcript)
+        plain_text_transcript = format_transcript(transcript_data)
         
         return plain_text_transcript, video_id
     except Exception as e:
@@ -37,7 +46,6 @@ def get_transcript(video_url):
 def download_button(object_to_download, download_filename, button_text):
     """
     Generates a link to download the given object_to_download.
-
     :param object_to_download: The object to be downloaded (a string).
     :param download_filename: Filename and extension of the file. e.g. mydata.csv, some_txt_output.txt
     :param button_text: Text of the download button.
@@ -64,11 +72,7 @@ video_url = st.text_input('Enter the YouTube video URL')
 
 if video_url:
     transcript, video_id = get_transcript(video_url)
-    # Render the download button directly after URL input field
-    if transcript and not transcript.startswith("Invalid YouTube URL") and not transcript.startswith("An error occurred"):
-        download_button(transcript, f"{video_id}_transcript.txt", "Download Transcript")
-    
-    # Display the transcript and the download button
     if transcript:
         st.subheader('Transcript')
         st.write(transcript)
+        download_button(transcript, f"{video_id}_transcript.txt", "Download Transcript")
