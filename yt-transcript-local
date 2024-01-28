@@ -1,0 +1,41 @@
+import os
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.formatters import TextFormatter
+
+def get_video_id_from_url(url):
+    # Extract video ID from the URL
+    if 'youtu.be' in url:
+        return url.split('/')[-1]
+    if 'youtube.com' in url:
+        return url.split('v=')[-1].split('&')[0]
+    return None
+
+def save_transcript(video_url, output_folder):
+    video_id = get_video_id_from_url(video_url)
+    if not video_id:
+        print("Invalid YouTube URL")
+        return
+
+    try:
+        # Fetching the transcript
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        
+        # Formatting the transcript as plain text
+        formatter = TextFormatter()
+        plain_text_transcript = formatter.format_transcript(transcript)
+        
+        # Saving the transcript to a file
+        filename = f"{output_folder}/{video_id}.txt"
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(plain_text_transcript)
+        print(f"Transcript saved to {filename}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+# Replace with the path to your desktop folder
+desktop_folder = '/Users/gary/Desktop/YT-txt'
+os.makedirs(desktop_folder, exist_ok=True)
+
+# Test the function with a YouTube URL
+test_url = 'https://www.youtube.com/watch?v=7wMY5MsKEkM'
+save_transcript(test_url, desktop_folder)
